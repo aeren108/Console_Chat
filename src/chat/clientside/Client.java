@@ -1,0 +1,257 @@
+/** @author Ahmet E. COLAK */
+package chat.clientside;
+
+import java.io.*;
+import java.net.*;
+import chat.file.*;
+import chat.gui.*;
+import javax.swing.JOptionPane;
+import java.util.SortedMap;
+import java.util.TreeMap;
+
+public class Client{
+	private Socket socket;
+	private ChatUtilities chat;
+	
+	private Editor editor;
+
+	private BufferedReader msg;
+
+	private Board panel;
+	
+	private String host;
+	private int port;
+	
+	private boolean connected;
+	
+	private SortedMap<String, String> servers;
+	
+	public Client() {
+		init();
+		
+		String message;
+		while (connected){
+			try {
+				message = msg.readLine();
+				
+				if (message.startsWith("/whisper-")){
+					String[] words = message.split("-", 0);
+					String first = words[0];
+					String second = words[1];
+					String third = words[2];
+					chat.sendCustomMessage(first + "-" + chat.getName() + "-" + second + "-" + third);
+					panel.addMessage("You > whispered " + second + ": " + third);
+				}
+				
+				else if (!message.isEmpty() && !message.equals(null)){
+					chat.sendMessage(message);
+					panel.addMessage("<"+chat.getName()+"> :" + message);
+				}
+				
+			} catch (IOException e) {
+				System.err.println("Wait a few seconds..");
+			}
+		}
+	}
+	
+	public void sendEvent(){
+		try {
+			String mesg = panel.getMessage();
+			
+			if (mesg.startsWith("/whisper-")){
+				String[] words = mesg.split("-", 0);
+				String first = words[0];
+				String second = words[1];
+				String third = words[2];
+				chat.sendCustomMessage(first + "-" + chat.getName() + "-" + second + "-" + third);
+				panel.addMessage("You > whispered " + second + ": " + third);
+				panel.clearBox();
+			}
+			else if (!mesg.isEmpty() && !mesg.equals(null)){
+				chat.sendMessage(mesg);
+				panel.addMessage("<"+chat.getName()+"> :" + mesg);
+				panel.clearBox();
+			}
+		} catch (IOException e) {
+			System.err.println("Message couldn't be sent");
+		}
+	}
+	
+	public void defaultConnect(){
+		try {
+			connected = true;
+			
+			host = "85.100.97.132";
+			port = 2002;
+			
+			socket = new Socket(host, port);
+			
+			chat = new ChatUtilities(socket);
+			chat.start();
+		} catch (PortUnreachableException e) {
+			System.err.println("\nPort is unreachable, please check the server.");
+		} catch (IOException e) {
+			System.err.println("\nOops! Something went wrong.");
+		}
+	}
+	
+	public void disconnect() throws IOException{
+		connected = false;
+		
+		panel.getSendButton().setEnabled(false);
+		
+		chat.stop();
+		socket.close();
+		socket = null;
+	}
+	
+	public void customConnect(){
+		try {
+			connected = true;
+			
+			host = JOptionPane.showInputDialog("Host's/Server's IP ");
+			port = Integer.parseInt(JOptionPane.showInputDialog("Host's/Server's port "));
+			
+			socket = new Socket(host, port);
+			
+			chat = new ChatUtilities(socket);
+			chat.start();
+			
+			servers.put(host ,"Unknown server");
+		} catch (PortUnreachableException e) {
+			System.err.println("\nPort is unreachable, please check the server.");
+		} catch (IOException e) {
+			System.err.println("\nOops! Something went wrong.");
+		}
+	}
+	
+	//Initializes the gui
+	public void init(){
+		panel = new Board(this, 800, 600);
+		editor = new Editor();
+		servers = new TreeMap<>();
+		
+		servers.put("85.100.97.132", "potato-server @ Ahmet");
+		servers.put("notspecified", "pi-server @ raspberry");
+		
+		editor.createFile("/home/potato/Desktop/Ahmet/Programcılık/Java/Workspace/Chat_App/saves/messages.txt");
+		panel.setDialog(editor.readFile("/home/potato/Desktop/Ahmet/Programcılık/Java/Workspace/Chat_App/saves/messages.txt", true));
+		
+		editor.createFile("saves/name.txt");
+		
+		if (editor.readFile("saves/name.txt", false).isEmpty() || editor.readFile("saves/name.txt", false).equals(null) || editor.readFile("saves/name.txt", false) == ""){
+			System.out.println("Not registered.");
+		}
+		else {
+			defaultConnect();
+		}
+		
+		panel.revalidate();
+	}
+	
+	public void stop() throws IOException{chat.stop();}
+	
+	public static void main(String[] args){
+		new Client();
+	}
+	
+	//This class for receiving and sending messages 
+	class ChatUtilities implements Runnable{
+		private Socket socket;
+		
+		private PrintWriter sender;
+		private BufferedReader reader;
+		private BufferedReader input;
+		
+		private String name;
+		private Thread thread;
+		
+		private boolean running;
+		
+		//Sockets and streams were defined 
+		public ChatUtilities(Socket socket) throws IOException {
+			this.socket = socket;
+			this.reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+			this.sender = new PrintWriter(socket.getOutputStream(), true);
+			this.input = new BufferedReader(new InputStreamReader(System.in));
+			
+			if (editor.readFile("saves/name.txt", false).isEmpty() || editor.readFile("saves/name.txt", false).equals(null) || editor.readFile("saves/name.txt", false) == ""){
+				name = JOptionPane.showInputDialog("Your username? ");
+				editor.writeFile("saves/name.txt", name);
+			}
+			else {
+				this.name = editor.readFile("saves/name.txt", false);
+			}
+		}
+		
+		public void setName(String name){this.name = name;}
+		
+		@Override
+		public void run() {
+			try {
+				System.out.println("Connected to " + socket.getInetAddress().getHostName());
+				panel.addMessage("Connected to " + servers.get(host));//Prints where you connected
+				sender.println("Server: @" + name + " has joined");
+				
+				String message;
+				while (running){
+					message = reader.readLine();// Reads the message
+					
+					if (connected)
+						panel.getConnectButton().setEnabled(false);
+					else
+						panel.getConnectButton().setEnabled(true);
+					
+					if (!message.isEmpty() && !message.equals(null)){// We don't want a null or empty message;
+						if (!message.startsWith("<"+name+">") && !message.startsWith(name)){// Server echoes the all clients, we don't want to see our message again in the console
+							System.out.println(message);
+							panel.addMessage(message);//Add text to JTextArea
+						}
+					}	
+				}
+			} catch (IOException e) {
+				System.err.println("\nOops! Something went wrong.");
+			}
+		}
+		
+		public void sendMessage(String message) throws IOException{
+			sender.println("<"+name+"> :" + message);
+		}
+		
+		public void sendCustomMessage(String message) throws IOException{
+			sender.println(message);
+		}
+		
+		public String getName(){return name;}
+		
+		public void start(){
+			if (running)
+				return;
+			
+			panel.getSendButton().setEnabled(true);
+			
+			running = true;
+			
+			thread = new Thread(this);
+			thread.start();
+		}
+
+		public void stop() throws IOException{
+			if(!running)
+				return;
+			
+			editor.writeFile("/home/potato/Desktop/Ahmet/Programcılık/Java/Workspace/Chat_App/saves/messages.txt", panel.getDialog());
+			
+			running = false;
+			
+			sendCustomMessage(name + " has left");
+			
+			reader.close();
+			sender.close();
+			input.close();
+			socket.close();
+		}	
+	}
+}
+
+
