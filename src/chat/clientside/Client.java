@@ -5,9 +5,9 @@ import java.io.*;
 import java.net.*;
 import chat.file.*;
 import chat.gui.*;
+
+import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
-import java.util.SortedMap;
-import java.util.TreeMap;
 
 public class Client{
 	private Socket socket;
@@ -18,13 +18,13 @@ public class Client{
 	private BufferedReader msg;
 
 	private Board panel;
+	private JFileChooser dir;
+	private String path;
 	
 	private String host;
 	private int port;
 	
 	private boolean connected;
-	
-	private SortedMap<String, String> servers;
 	
 	public Client() {
 		init();
@@ -81,7 +81,7 @@ public class Client{
 		try {
 			connected = true;
 			
-			host = "85.100.97.132";
+			host = "localhost";
 			port = 2002;
 			
 			socket = new Socket(host, port);
@@ -116,8 +116,6 @@ public class Client{
 			
 			chat = new ChatUtilities(socket);
 			chat.start();
-			
-			servers.put(host ,"Unknown server");
 		} catch (PortUnreachableException e) {
 			System.err.println("\nPort is unreachable, please check the server.");
 		} catch (IOException e) {
@@ -125,21 +123,22 @@ public class Client{
 		}
 	}
 	
-	//Initializes the gui
+	//Initializes the GUI
 	public void init(){
 		panel = new Board(this, 800, 600);
 		editor = new Editor();
-		servers = new TreeMap<>();
+		dir = new JFileChooser();
+		dir.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+		dir.setDialogTitle("Select directory for saving messages");
+		dir.showOpenDialog(dir);
+		path = dir.getSelectedFile().getAbsolutePath();
+	
+		editor.createFile(path + "/messages.txt");
+		panel.setDialog(editor.readFile(path + "/messages.txt", true));
 		
-		servers.put("85.100.97.132", "potato-server @ Ahmet");
-		servers.put("notspecified", "pi-server @ raspberry");
+		editor.createFile(path + "/name.txt");
 		
-		editor.createFile("/home/potato/Desktop/Ahmet/Programcılık/Java/Workspace/Chat_App/saves/messages.txt");
-		panel.setDialog(editor.readFile("/home/potato/Desktop/Ahmet/Programcılık/Java/Workspace/Chat_App/saves/messages.txt", true));
-		
-		editor.createFile("saves/name.txt");
-		
-		if (editor.readFile("saves/name.txt", false).isEmpty() || editor.readFile("saves/name.txt", false).equals(null) || editor.readFile("saves/name.txt", false) == ""){
+		if (editor.readFile(path + "/name.txt", false).isEmpty() || editor.readFile(path + "/name.txt", false).equals(null) || editor.readFile(path + "/name.txt", false) == ""){
 			System.out.println("Not registered.");
 		}
 		else {
@@ -175,12 +174,15 @@ public class Client{
 			this.sender = new PrintWriter(socket.getOutputStream(), true);
 			this.input = new BufferedReader(new InputStreamReader(System.in));
 			
-			if (editor.readFile("saves/name.txt", false).isEmpty() || editor.readFile("saves/name.txt", false).equals(null) || editor.readFile("saves/name.txt", false) == ""){
+			if (editor.readFile(path + "/name.txt", false).isEmpty() || 
+				editor.readFile(path + "/name.txt", false).equals(null) || 
+				editor.readFile(path + "/name.txt", false) == "") {
+				
 				name = JOptionPane.showInputDialog("Your username? ");
-				editor.writeFile("saves/name.txt", name);
+				editor.writeFile(path + "/name.txt", name);
 			}
 			else {
-				this.name = editor.readFile("saves/name.txt", false);
+				this.name = editor.readFile(path + "/name.txt", false);
 			}
 		}
 		
@@ -190,7 +192,6 @@ public class Client{
 		public void run() {
 			try {
 				System.out.println("Connected to " + socket.getInetAddress().getHostName());
-				panel.addMessage("Connected to " + servers.get(host));//Prints where you connected
 				sender.println("Server: @" + name + " has joined");
 				
 				String message;
@@ -240,7 +241,7 @@ public class Client{
 			if(!running)
 				return;
 			
-			editor.writeFile("/home/potato/Desktop/Ahmet/Programcılık/Java/Workspace/Chat_App/saves/messages.txt", panel.getDialog());
+			editor.writeFile(path + "/messages.txt", panel.getDialog());
 			
 			running = false;
 			

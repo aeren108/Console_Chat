@@ -35,7 +35,7 @@ public class ClientThread implements Runnable {
 					sendMessage("Your codename's: " + codename);
 					System.out.println(name);
 
-					for (ClientThread ct : ClientHandler.getClients())// Echoes the message to all clients
+					for (ClientThread ct : Server.getClients())// Echoes the message to all clients
 						ct.sendMessage(message);
 
 				}//Server: xx has joined
@@ -58,11 +58,11 @@ public class ClientThread implements Runnable {
 					for (String word : words)
 						System.out.println(word);
 
-					ClientHandler.whisper(from, to, msg);
+					Server.whisper(from, to, msg);
 				}
 
 				else {
-					for (ClientThread ct : ClientHandler.getClients())// Echoes the message to all clients
+					for (ClientThread ct : Server.getClients())// Echoes the message to all clients
 						ct.sendMessage(message);
 				}
 			}

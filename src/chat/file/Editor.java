@@ -13,7 +13,6 @@ public class Editor {
 	File file;
 	File files;
 
-	private String URL;
 	private String lines;
 
 	public Editor(){
@@ -21,9 +20,7 @@ public class Editor {
 	}
 
 	public void createFile(String path){
-
-		this.URL = path;
-		files = new File(URL);
+		files = new File(path);
 
 		if (!files.exists()){
 			try {
@@ -100,11 +97,7 @@ public class Editor {
 		return(lines);
 
 	}
-
-	public String getURL(){
-		return URL;
-	}
-
+	
 	public File getFile(){
 		return files;
 	}
