@@ -138,7 +138,9 @@ public class Client{
 		
 		editor.createFile(path + "/name.txt");
 		
-		if (editor.readFile(path + "/name.txt", false).isEmpty() || editor.readFile(path + "/name.txt", false).equals(null) || editor.readFile(path + "/name.txt", false) == ""){
+		if (editor.readFile(path + "/name.txt", false).isEmpty() || 
+			editor.readFile(path + "/name.txt", false).equals(null) || 
+			editor.readFile(path + "/name.txt", false) == ""){ //Checking all possibilities
 			System.out.println("Not registered.");
 		}
 		else {
@@ -154,7 +156,7 @@ public class Client{
 		new Client();
 	}
 	
-	//This class for receiving and sending messages 
+	//This class is for receiving and sending messages 
 	class ChatUtilities implements Runnable{
 		private Socket socket;
 		
@@ -167,7 +169,6 @@ public class Client{
 		
 		private boolean running;
 		
-		//Sockets and streams were defined 
 		public ChatUtilities(Socket socket) throws IOException {
 			this.socket = socket;
 			this.reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -203,10 +204,10 @@ public class Client{
 					else
 						panel.getConnectButton().setEnabled(true);
 					
-					if (!message.isEmpty() && !message.equals(null)){// We don't want a null or empty message;
-						if (!message.startsWith("<"+name+">") && !message.startsWith(name)){// Server echoes the all clients, we don't want to see our message again in the console
+					if (!message.isEmpty() && !message.equals(null)){
+						if (!message.startsWith("<"+name+">") && !message.startsWith(name)) { // For not to see our own message
 							System.out.println(message);
-							panel.addMessage(message);//Add text to JTextArea
+							panel.addMessage(message);
 						}
 					}	
 				}

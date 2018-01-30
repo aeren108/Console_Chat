@@ -14,7 +14,6 @@ public class ClientThread implements Runnable {
 	private String codename;
 	private String name;
 
-	//Defines the streams and socket
 	public ClientThread(Socket socket, String codename) throws IOException {
 		this.socket = socket;
 		this.reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -27,7 +26,7 @@ public class ClientThread implements Runnable {
 		try {
 			String message;
 			while (running){
-				message = reader.readLine(); //Reads the message
+				message = reader.readLine(); 
 
 				if (message.startsWith("Server:")){
 					name = message.substring(8, message.length()-11);
@@ -80,7 +79,7 @@ public class ClientThread implements Runnable {
 	public String getName(){return name;}
 
 	public void start(){
-		if (running) //If it's already running, we shouldn't start the thread again
+		if (running) //If it's already running, it returns
 			return;
 
 		running = true;

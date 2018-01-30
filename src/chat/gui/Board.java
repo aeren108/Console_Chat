@@ -36,7 +36,6 @@ public class Board extends JPanel{
 		buttonEvents();
 	}
 
-	//Initisalization function.
 	public void init(int width, int height){
 		frame = new JFrame("Chat");
 
@@ -91,9 +90,9 @@ public class Board extends JPanel{
 		add(clear);
 		add(scroll);
 
-		frame.add(this);//Adding to frame to this reference
+		frame.add(this);
 
-		frame.setVisible(true);//Setting layout to null to put the object anywhere in window
+		frame.setVisible(true);
 
 
 		revalidate();

@@ -63,7 +63,6 @@ public class Server implements Runnable{
 		}
 	}
 	
-	//Returns the clientList for ClientThread class;
 	public static ArrayList<ClientThread> getClients(){
 		return clientList;
 	}
@@ -95,7 +94,7 @@ public class Server implements Runnable{
 		socket.close();
 	}
 	
-	//Sends message to all clients (never used)
+	//Sends message to all clients
 	public void broadcast(String message) throws IOException{
 		for (ClientThread ct : clientList)
 			ct.sendMessage(message);
