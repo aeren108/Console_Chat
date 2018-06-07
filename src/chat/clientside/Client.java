@@ -49,7 +49,7 @@ public class Client{
 				}
 				
 			} catch (IOException e) {
-				System.err.println("Wait a few seconds..");
+				System.err.println("Oops! Something went wrong.");
 			}
 		}
 	}
